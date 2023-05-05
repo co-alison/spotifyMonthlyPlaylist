@@ -5,7 +5,10 @@ import random
 import datetime
 from config import CLIENT_ID, CLIENT_SECRET
 
-from flask import Flask, request, url_for, session, redirect
+from flask import Flask, request, url_for, session, redirect, flash
+
+import logging
+logging.basicConfig(filename='myapp.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 
@@ -25,28 +28,41 @@ def redirect_page():
     # get authorization code
     code = request.args.get('code')
     # exchange code for access token
-    token_info = create_spotify_oauth().get_access_token(code)
-    session[TOKEN_INFO] = token_info
-    return redirect(url_for('get_monthly_playlist', _external = True))
+    try:
+        token_info = create_spotify_oauth().get_access_token(code)
+        session[TOKEN_INFO] = token_info
+        return redirect(url_for('get_monthly_playlist', _external = True))
+    except spotipy.SpotifyException as e:
+        flash('Error: {}'.format(e.msg))
+        return redirect('/')
 
 @app.route('/monthlyPlaylist')
 def get_monthly_playlist():
     try:
         token_info = get_token()
     except:
-        print("User not logged in") 
+        logging.warning("User not logged in") 
         return redirect('/')
     
     sp = spotipy.Spotify(auth=token_info['access_token'])
 
     # current user
-    user = sp.current_user()
+    try:
+        user = sp.current_user()
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred while retrieving user information: {e}")
+        return 'An error occurred while retrieving your user information. Please try again later.'
 
     # get date one month ago
     one_month_ago = datetime.datetime.now() - datetime.timedelta(days=30)
     
     # get user saved tracks in last month
-    saved_tracks = sp.current_user_saved_tracks()
+    try:
+        saved_tracks = sp.current_user_saved_tracks()
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred while retrieving saved tracks: {e}")
+        return 'An error occurred while retrieving your saved tracks. Please try again later.'
+    
     last_month_saved_tracks = []
     for item in saved_tracks['items']:
         track = item['track']
@@ -55,15 +71,28 @@ def get_monthly_playlist():
             last_month_saved_tracks.append(track)
             
     # get user top tracks in last month
-    top_tracks = sp.current_user_top_tracks(time_range="short_term")['items']
+    try:
+        top_tracks = sp.current_user_top_tracks(time_range="short_term")['items']
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred while retrieving top tracks: {e}")
+        return 'An error occurred while retrieving your top tracks. Please try again later.'
 
     # get user followed artists
-    followed_artists = sp.current_user_followed_artists()
-
+    try:
+        followed_artists = sp.current_user_followed_artists()
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred while retrieving followed artists: {e}")
+        return 'An error occurred while retrieving your followed artists. Please try again later.'
+    
     # get new releases from followed artists
     new_releases = []
     for artist in followed_artists['artists']['items']:
-        artist_top_tracks = sp.artist_top_tracks(artist['id'], user['country'])
+        try:
+            artist_top_tracks = sp.artist_top_tracks(artist['id'], user['country'])
+        except spotipy.SpotifyException as e:
+            logging.error(f"An error occurred while retrieving new releases: {e}")
+            return 'An error occurred while retrieving new releases. Please try again later.'
+        
         for track in artist_top_tracks['tracks']:
             track_date = datetime.datetime.strptime(track['album']['release_date'], '%Y-%m-%d')
             if track_date >= one_month_ago:
@@ -84,8 +113,12 @@ def get_monthly_playlist():
     random.shuffle(seed_genres)
     seed_genres = seed_genres[:1]
 
-    recommended_tracks = sp.recommendations(seed_artists=seed_artist_ids, seed_tracks=seed_track_ids, limit=10)['tracks'] if (seed_track_ids or seed_artist_ids or seed_genres) else []
-
+    try:
+        recommended_tracks = sp.recommendations(seed_artists=seed_artist_ids, seed_tracks=seed_track_ids, limit=10)['tracks'] if (seed_track_ids or seed_artist_ids or seed_genres) else []
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred while generating recommendations: {e}")
+        return 'An error has occurred while generating your recommendations. Please try again later.'
+    
     # combine all tracks and get unique tracks
     last_month_tracks = last_month_saved_tracks + top_tracks + new_releases + recommended_tracks
     unique_track_ids = set(track['id'] for track in last_month_tracks)
@@ -93,7 +126,12 @@ def get_monthly_playlist():
     # get unique playlist name (in case of duplicate)
     playlist_name = datetime.datetime.now().strftime('%B %Y')
     playlist_name_unique = playlist_name
-    playlist_names = [p['name'] for p in sp.current_user_playlists()['items']]
+
+    try:
+        playlist_names = [p['name'] for p in sp.current_user_playlists()['items']]
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred: {e}")
+        return 'An error has occurred. Please try again later.'
 
     i = 1
     while playlist_name_unique in playlist_names:
@@ -101,16 +139,24 @@ def get_monthly_playlist():
         i += 1
     
     # create playlist
-    monthly_playlist = sp.user_playlist_create(
-        user['id'], 
-        name=playlist_name_unique,
-        public=False,
-        collaborative=False, 
-        description="Replay the last month with a curated selection of your favourite songs, recent discoveries, plus new releases and recommended tracks based on your listening habits."
-    )
+    try:
+        monthly_playlist = sp.user_playlist_create(
+            user['id'], 
+            name=playlist_name_unique,
+            public=False,
+            collaborative=False, 
+            description="Replay the last month with a curated selection of your favourite songs, recent discoveries, plus new releases and recommended tracks based on your listening habits."
+        )
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred: {e}")
+        return 'An error has occurred. Please try again later.'
 
     # add tracks to new playlist
-    sp.playlist_add_items(monthly_playlist['id'], unique_track_ids)
+    try:
+        sp.playlist_add_items(monthly_playlist['id'], unique_track_ids)
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred: {e}")
+        return 'An error has occurred. Please try again later.'
 
     return ("Monthly playlist created successfully")
 
@@ -118,6 +164,7 @@ def get_monthly_playlist():
 def get_token():
     token_info = session.get(TOKEN_INFO, None)
     if not token_info:
+        logging.warning('TOKEN_INFO key is not found in session')
         redirect(url_for('login', _external = False))
 
     now = int(time.time())

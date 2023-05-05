@@ -1,1 +1,3 @@
 /.cache
+config.py
+myapp.log
