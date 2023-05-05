@@ -89,11 +89,21 @@ def get_monthly_playlist():
     # combine all tracks and get unique tracks
     last_month_tracks = last_month_saved_tracks + top_tracks + new_releases + recommended_tracks
     unique_track_ids = set(track['id'] for track in last_month_tracks)
+
+    # get unique playlist name (in case of duplicate)
+    playlist_name = datetime.datetime.now().strftime('%B %Y')
+    playlist_name_unique = playlist_name
+    playlist_names = [p['name'] for p in sp.current_user_playlists()['items']]
+
+    i = 1
+    while playlist_name_unique in playlist_names:
+        playlist_name_unique = f"{playlist_name} ({i})"
+        i += 1
     
     # create playlist
     monthly_playlist = sp.user_playlist_create(
         user['id'], 
-        name=datetime.datetime.now().strftime('%B %Y'),
+        name=playlist_name_unique,
         public=False,
         collaborative=False, 
         description="Replay the last month with a curated selection of your favourite songs, recent discoveries, plus new releases and recommended tracks based on your listening habits."
