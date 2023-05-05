@@ -1,8 +1,9 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import time
-import os
+import random
 import datetime
+from config import CLIENT_ID, CLIENT_SECRET
 
 from flask import Flask, request, url_for, session, redirect
 
@@ -54,7 +55,7 @@ def get_monthly_playlist():
             last_month_saved_tracks.append(track)
             
     # get user top tracks in last month
-    top_tracks = sp.current_user_top_tracks(time_range="short_term")
+    top_tracks = sp.current_user_top_tracks(time_range="short_term")['items']
 
     # get user followed artists
     followed_artists = sp.current_user_followed_artists()
@@ -69,24 +70,25 @@ def get_monthly_playlist():
                 new_releases.append(track)
 
     # generate seeds for recommendation
-    seed_artist_ids = [artist['id'] for artist in followed_artists['artists']['items']]
+    seed_artist_ids = [artist['id'] for artist in followed_artists['artists']['items'][:5]]
+    random.shuffle(seed_artist_ids)
+    seed_artist_ids = seed_artist_ids[:2]
 
-    seed_track_ids = [item['track']['id'] for item in saved_tracks['items']]
+    seed_track_ids = [item['track']['id'] for item in saved_tracks['items'][:5]]
+    random.shuffle(seed_track_ids)
+    seed_track_ids = seed_track_ids[:2]
 
     saved_track_features = sp.audio_features(seed_track_ids)
-    saved_track_genres = set([genre for features in saved_track_features for genre in features['genres']])
+    saved_track_genres = set([genre for features in saved_track_features for genre in features.get('genres', [])])
     seed_genres = list(saved_track_genres)
+    random.shuffle(seed_genres)
+    seed_genres = seed_genres[:1]
 
-    recommended_tracks = sp.recommendations(seed_artists=seed_artist_ids, seed_genres=seed_genres, seed_tracks=seed_track_ids, limit=20)
+    recommended_tracks = sp.recommendations(seed_artists=seed_artist_ids, seed_tracks=seed_track_ids, limit=10)['tracks'] if (seed_track_ids or seed_artist_ids or seed_genres) else []
 
     # combine all tracks and get unique tracks
     last_month_tracks = last_month_saved_tracks + top_tracks + new_releases + recommended_tracks
     unique_track_ids = set(track['id'] for track in last_month_tracks)
-
-    unique_tracks = []
-    for track_id in unique_track_ids:
-        track_info = sp.track(track_id)
-        unique_tracks.append(track_info)
     
     # create playlist
     monthly_playlist = sp.user_playlist_create(
@@ -96,6 +98,9 @@ def get_monthly_playlist():
         collaborative=False, 
         description="Replay the last month with a curated selection of your favourite songs, recent discoveries, plus new releases and recommended tracks based on your listening habits."
     )
+
+    # add tracks to new playlist
+    sp.playlist_add_items(monthly_playlist['id'], unique_track_ids)
 
     return ("Monthly playlist created successfully")
 
@@ -116,10 +121,10 @@ def get_token():
 
 def create_spotify_oauth():
     return SpotifyOAuth(
-        client_id= os.environ.get('SPOTIPY_CLIENT_ID'),
-        client_secret= os.environ.get('SPOTIPY_CLIENT_SECRET'),
+        client_id= CLIENT_ID,
+        client_secret= CLIENT_SECRET,
         redirect_uri = url_for('redirect_page', _external = True),
-        scope= 'user-library-read playlist-modify-public playlist-modify-private'
+        scope= 'user-library-read user-top-read user-follow-read playlist-modify-public playlist-modify-private user-read-private user-read-email'
         )
 
 app.run(host="localhost", port=3000, debug=True)
