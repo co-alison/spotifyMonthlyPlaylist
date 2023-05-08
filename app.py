@@ -3,9 +3,9 @@ from spotipy.oauth2 import SpotifyOAuth
 import time
 import random
 import datetime
-from config import CLIENT_ID, CLIENT_SECRET
+from config import CLIENT_ID, CLIENT_SECRET, SECRET_KEY
 
-from flask import Flask, request, url_for, session, redirect, flash
+from flask import Flask, request, url_for, session, redirect, flash, render_template
 
 import logging
 logging.basicConfig(filename='myapp.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -13,11 +13,19 @@ logging.basicConfig(filename='myapp.log', level=logging.ERROR, format='%(asctime
 app = Flask(__name__)
 
 app.config['SESSION_COOKIE_NAME'] = 'Spotify Cookie'
-app.secret_key = 'fje83J#W*@j3kljdfa8#3kjd*03'
+app.secret_key = SECRET_KEY
 TOKEN_INFO = 'token_info'
 
-# handle logging in
+# home page
 @app.route('/')
+def index():
+    user_is_logged_in = session.get(TOKEN_INFO) is not None
+    if user_is_logged_in:
+        return render_template('create.html')
+    else:
+        return render_template('index.html')
+
+@app.route('/login')
 def login():
     auth_url = create_spotify_oauth().get_authorize_url()
     return redirect(auth_url)
@@ -31,10 +39,22 @@ def redirect_page():
     try:
         token_info = create_spotify_oauth().get_access_token(code)
         session[TOKEN_INFO] = token_info
-        return redirect(url_for('get_monthly_playlist', _external = True))
+        return redirect('/')
     except spotipy.SpotifyException as e:
         flash('Error: {}'.format(e.msg))
         return redirect('/')
+    
+@app.route('/about')
+def about():
+    return ('about')
+
+@app.route('/contact')
+def contact():
+    return ('contact')
+
+@app.route('/privacy')
+def privacy():
+    return ('privacy')
 
 @app.route('/monthlyPlaylist')
 def get_monthly_playlist():
