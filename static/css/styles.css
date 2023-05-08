@@ -15,16 +15,17 @@ body {
     color: #3D1351;
 }
 
-.btn-custom {
-    background-color: #F5C2D3;
-    border-color: #F5C2D3;
-    color: #3D1351;
+.btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
+    background-color: #F5C2D3 !important;
+    border-color: #F5C2D3 !important;
+    color: #3D1351 !important;
     font-weight: 500;
 }
 
-.btn-outline-custom {
-    border-color: #F5C2D3;
-    color: #F5C2D3;
+.btn-outline-primary, .btn-outline-primary:hover, .btn-outline-primary:active, .btn-outline-primary:visited {
+    background-color: #F5C2D3 !important;
+    border-color: #F5C2D3 !important;
+    color: #3D1351 !important;
     font-weight: 500;
 }
 

@@ -11,15 +11,6 @@ from flask import Flask, request, url_for, session, redirect, flash, render_temp
 import logging
 logging.basicConfig(filename='myapp.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# from flask_wtf import FlaskForm
-# from wtforms import StringField, TextAreaField, FileField
-# from wtforms.validators import DataRequired, Length
-
-# class PlaylistForm(FlaskForm):
-#     title = StringField('Title', validators=[Length(max=100)])
-#     description = TextAreaField('Description', validators=[Length(max=1000)])
-#     cover_image = FileField('Cover image')
-
 app = Flask(__name__)
 
 app.config['SESSION_COOKIE_NAME'] = 'Spotify Cookie'
@@ -77,15 +68,15 @@ def redirect_page():
     
 @app.route('/about')
 def about():
-    return ('about')
+    return render_template('about.html')
 
 @app.route('/contact')
 def contact():
-    return ('contact')
+    return render_template('contact.html')
 
 @app.route('/privacy')
 def privacy():
-    return ('privacy')
+    return render_template('privacy.html')
 
 @app.route('/monthlyPlaylist', methods=['POST'])
 def get_monthly_playlist():
