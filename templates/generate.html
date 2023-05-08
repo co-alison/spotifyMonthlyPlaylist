@@ -1,0 +1,81 @@
+{% extends "base.html" %} {% block title %}Create{% endblock %} 
+{% block content %}
+<div class="mx-auto mt-5" style="width:fit-content">
+    <h1 class="text-center fw-bold">Generate your playlist</h1>
+    <form method="POST" action="{{ url_for('get_monthly_playlist') }}" class="mt-5">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="year">Year:</label>
+            </div>
+            <div class="col-auto">
+                <select id="year" name="year" class="form-select" aria-labelledby="year">
+                    {% for year in years %}
+                      {% if year == current_year %}
+                        <option value="{{ year }}" selected>{{ year }}</option>
+                        {% else %}
+                          <option value="{{ year }}">{{ year }}</option>
+                        {% endif %}
+                    {% endfor %}
+                  </select>
+            </div>
+            <div class="col-auto ms-3">
+                <label for="month">Month:</label>
+            </div>
+            <div class="col-auto">
+                <select id="month" name="month" class="form-select" aria-labelledby="month">
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary col-auto ms-5">REVIEW</button>
+        </div>
+      </form>
+</div>
+
+<script>
+  function updateMonthOptions() {
+    const month_name = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December"
+    };
+    
+    const yearSelect = document.getElementById("year");
+    const monthSelect = document.getElementById("month");
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    const selectedYear = parseInt(yearSelect.value);
+
+    monthSelect.innerHTML = "";
+
+    if (selectedYear === currentYear) {
+        for (let i = 1; i < currentMonth; i++) {
+            const option = document.createElement("option");
+            option.value = i;
+            option.textContent = month_name[i];
+            monthSelect.appendChild(option);
+        }
+        monthSelect.value = currentMonth - 1;
+    } else {
+        for (let i = 1; i <= 12; i++) {
+            const option = document.createElement("option");
+            option.value = i;
+            option.textContent = month_name[i];
+            monthSelect.appendChild(option);
+        }
+        monthSelect.value = 1;
+    }
+  }
+
+  const yearSelect = document.getElementById("year");
+  yearSelect.addEventListener("change", updateMonthOptions);
+  updateMonthOptions();
+</script>
+  {% endblock %}
