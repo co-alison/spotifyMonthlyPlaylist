@@ -1,0 +1,128 @@
+{% extends "base.html" %} {% block title %}Review{% endblock %} 
+{% block content %}
+<div class="mx-auto mt-5">
+    <h1 class="fw-bold text-center">Review your playlist</h1>
+    <div class="row mt-3 justify-content-center">
+        <div class="col-md-5 mx-3">
+            <form id="review-form" method="POST" action="/monthlyPlaylist/create" enctype="multipart/form-data">
+                {% for track in tracks %}
+                    <input type="hidden" name="tracks" id="tracks" value="{{ track.id }}">
+                {% endfor %}
+                <input type="hidden" name="selected_tracks" id="selected_tracks" value="">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <input type="text" id="title" name="title" class="form-control" placeholder="{{ playlist_name }}">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="{{ description }}"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="cover-image" class="form-label">Cover image:</label>
+                    <input class="form-control" type="file" id="cover-image" name="cover-image">
+                </div>
+                <button type="submit" class="btn btn-custom mb-5 mt-5">CREATE</button>
+            </form>
+        </div>
+        <div class="col-md-5 mx-3" style="height: 400px; overflow-y: scroll;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Track</th>
+                  <th scope="col">Artist</th>
+                  <th scope="col">Album</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for track in tracks %}
+                  <tr class="track-row">
+                    <th scope="row">{{ loop.index }}</th>
+                    <td>{{ track.name }}</td>
+                    <td>{{ track.artists[0].name }}</td>
+                    <td>{{ track.album.name }}</td>
+                    <td>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tracks" value="{{ track.id }}">
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="warningModalLabel">Warning!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to create the playlist? Selected songs will be removed from the playlist.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-custom" id="createBtn">Create</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+    var checkboxes = document.querySelectorAll('input[type="checkbox"]')
+    checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function () {
+            var selectedTracks = document.querySelector('input[name="selected_tracks"]')
+            var trackId = this.value
+            var row = this.closest('tr');
+
+            if (this.checked) {
+                row.classList.add('strike');
+                selectedTracks.value += trackId + ',';
+            } else {
+                row.classList.remove('strike');
+                selectedTracks.value = selectedTracks.value.replace(trackId + ",", "");
+            }
+        });
+    });
+
+    var createBtn = document.getElementById("createBtn");
+    createBtn.addEventListener("click", function() {
+        $('#warningModal').modal('hide');
+        var userTitle = document.querySelector('input[name="title"]');
+        userTitle.value = userTitle.value ? userTitle.value : userTitle.getAttribute("placeholder");
+
+        var userDescription = document.querySelector('textarea[name="description"]');
+        userDescription.value = userDescription.value ? userDescription.title : userDescription.getAttribute("placeholder");
+
+        
+        document.querySelector("form").submit();
+    });
+
+    var form = document.querySelector("form");
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        var selectedTracks = document.querySelector('input[name="selected_tracks"]');
+        selectedTracks.value = selectedTracks.value.slice(0, -1);
+
+        $('#warningModal').modal('show');
+    });
+</script>
+
+<style>
+    .form-check-input:checked {
+        background-color: red;
+        border-color: red;
+    }
+
+    .strike {
+        text-decoration: line-through;
+    }
+</style>
+
+{% endblock %}

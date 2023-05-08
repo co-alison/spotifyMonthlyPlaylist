@@ -6,6 +6,10 @@ body {
     color: white;
 }
 
+.table {
+    color: white;
+}
+
 .navbar {
     background-color: white;
     color: #3D1351;
@@ -28,4 +32,9 @@ body {
     position: absolute;
     bottom: 0;
     width: 100%
+}
+
+.modal-content {
+    background-color: #3D1351;
+    color: white;
 }

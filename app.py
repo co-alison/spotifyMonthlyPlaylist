@@ -3,12 +3,22 @@ from spotipy.oauth2 import SpotifyOAuth
 import time
 import random
 import datetime
+import os
 from config import CLIENT_ID, CLIENT_SECRET, SECRET_KEY
 
 from flask import Flask, request, url_for, session, redirect, flash, render_template
 
 import logging
 logging.basicConfig(filename='myapp.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# from flask_wtf import FlaskForm
+# from wtforms import StringField, TextAreaField, FileField
+# from wtforms.validators import DataRequired, Length
+
+# class PlaylistForm(FlaskForm):
+#     title = StringField('Title', validators=[Length(max=100)])
+#     description = TextAreaField('Description', validators=[Length(max=1000)])
+#     cover_image = FileField('Cover image')
 
 app = Flask(__name__)
 
@@ -198,37 +208,71 @@ def get_monthly_playlist():
         playlist_name_unique = f"{playlist_name} ({i})"
         i += 1
 
-    # go to review page
-    # redirect(url_for('review', playlist_name=playlist_name_unique, user_id=user['id']))
-    render_template('review.html', playlist_name=playlist_name_unique)
+    description = "Replay the month with a curated selection of your favourite songs, recent discoveries, plus new releases and recommended tracks based on your listening habits."
 
-@app.route('/review')
-def review():
-    playlist_name = request.args.get('playlist_name')
-    user_id = request.args.get('user_id')
+    return render_template('review.html', playlist_name=playlist_name_unique, description=description, tracks=all_month_tracks)
 
+@app.route('/monthlyPlaylist/create', methods=['POST'])
+def create():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    cover_image = request.files.get('cover-image')
+    selected_track_ids = request.form.get('selected_tracks')
+    track_ids = request.form.getlist('tracks')
+
+    try:
+        token_info = get_token()
+    except:
+        logging.warning("User not logged in") 
+        return redirect('/')
+
+    track_ids_to_keep = []
+    for track_id in track_ids:
+        if track_id not in selected_track_ids:
+            track_ids_to_keep.append(str(track_id))
+
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+
+    # current user
+    try:
+        user = sp.current_user()
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred while retrieving user information: {e}")
+        return 'An error occurred while retrieving your user information. Please try again later.'
+
+    # create playlist
+    try:
+        monthly_playlist = sp.user_playlist_create(
+            user['id'], 
+            name=title,
+            public=False,
+            collaborative=False, 
+            description=description
+        )
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred: {e}")
+        return 'An error has occurred. Please try again later.'
     
-    # # create playlist
-    # try:
-    #     monthly_playlist = sp.user_playlist_create(
-    #         user_id, 
-    #         name=playlist_name,
-    #         public=False,
-    #         collaborative=False, 
-    #         description="Replay the month with a curated selection of your favourite songs, recent discoveries, plus new releases and recommended tracks based on your listening habits."
-    #     )
-    # except spotipy.SpotifyException as e:
-    #     logging.error(f"An error occurred: {e}")
-    #     return 'An error has occurred. Please try again later.'
+    # upload cover image
+    cover_image.save('cover_image.jpg')
 
-    # # add tracks to new playlist
-    # try:
-    #     sp.playlist_add_items(monthly_playlist['id'], unique_track_ids)
-    # except spotipy.SpotifyException as e:
-    #     logging.error(f"An error occurred: {e}")
-    #     return 'An error has occurred. Please try again later.'
+    with open('cover_image.jpg', 'rb') as f:
+        try:
+            image_data = f.read()
+            sp.playlist_upload_cover_image(monthly_playlist['id'], image_data)
+        except spotipy.SpotifyException as e:
+            logging.error(f"An error occurred while uploading cover image: {e}")
+    
+    os.remove('cover_image.jpg')
 
-    # return ("Monthly playlist created successfully")
+    # add tracks to new playlist
+    try:
+        sp.playlist_add_items(monthly_playlist['id'], track_ids_to_keep)
+    except spotipy.SpotifyException as e:
+        logging.error(f"An error occurred: {e}")
+        return 'An error has occurred. Please try again later.'
+
+    return render_template('success.html')
 
 def get_account_creation_date():
     try:
