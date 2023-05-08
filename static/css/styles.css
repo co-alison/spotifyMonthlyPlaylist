@@ -11,21 +11,14 @@ body {
     color: #3D1351;
 }
 
-.btn-primary {
+.btn-custom {
     background-color: #F5C2D3;
     border-color: #F5C2D3;
     color: #3D1351;
     font-weight: 500;
 }
 
-.btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active, .btn-outline-primary.active {
-    background-color: #F5C2D3;
-    border-color: #F5C2D3;
-    color: #3D1351;
-    font-weight: 500;
-}
-
-.btn-outline-primary {
+.btn-outline-custom {
     border-color: #F5C2D3;
     color: #F5C2D3;
     font-weight: 500;

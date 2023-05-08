@@ -1,4 +1,41 @@
 {% extends "base.html" %} {% block title %}Create{% endblock %} 
 {% block content %}
-<h1>Generate your playlist</h1>
+<div class="mx-auto mt-5" style="width:fit-content">
+    <h1 class="text-center fw-bold">Generate your playlist</h1>
+    <form method="POST" action="{{ url_for('get_monthly_playlist') }}" class="mt-5">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="year">Year:</label>
+            </div>
+            <div class="col-auto">
+                <select id="year" name="year" class="form-select" aria-labelledby="year">
+                    {% for year in years %}
+                      {% if year == current_year %}
+                        <option value="{{ year }}" selected>{{ year }}</option>
+                        {% else %}
+                          <option value="{{ year }}">{{ year }}</option>
+                        {% endif %}
+                    {% endfor %}
+                  </select>
+            </div>
+            <div class="col-auto ms-3">
+                <label for="month">Month:</label>
+            </div>
+            <div class="col-auto">
+                <select id="month" name="month" class="form-select" aria-labelledby="month">
+                    {% for month in months %}
+                      {% if (year == current_year and month < current_month) or (year != current_year) %}
+                        {% if month == current_month %}
+                          <option value="{{ month }}" selected>{{ month_name[month] }}</option>
+                        {% else %}
+                          <option value="{{ month }}">{{ month_name[month] }}</option>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+            </div>
+            <button type="submit" class="btn btn-custom col-auto ms-5">NEXT</button>
+        </div>
+      </form>
+</div>
 {% endblock %}
