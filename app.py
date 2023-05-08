@@ -26,7 +26,6 @@ def index():
         current_month = datetime.datetime.now().month
 
         years = [year for year in range(2008, current_year + 1)]
-        months = [month for month in range(1, 13)]
 
         month_name = {
             1: 'January',
@@ -43,7 +42,7 @@ def index():
             12: 'December'
         }
 
-        return render_template('create.html', years=years, months=months, current_year=current_year, current_month=current_month, month_name=month_name)
+        return render_template('generate.html', years=years, current_year=current_year, current_month=current_month, month_name=month_name)
     else:
         return render_template('index.html')
 
