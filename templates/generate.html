@@ -2,6 +2,18 @@
 {% block content %}
 <div class="mx-auto mt-5" style="width:fit-content">
     <h1 class="text-center fw-bold">Generate your playlist</h1>
+    <ol class="mt-3">
+      <li>Select a month and year</li>
+      <li>Click the review button</li>
+      <li>Your playlist will include:
+        <ul>
+          <li>Your saved tracks from the selected month/year</li>
+          <li>Releases in the selected month/year from artists you follow</li>
+          <li>Your top tracks from the previous month (if applicable)</li>
+          <li>Recommended tracks based on the above data</li>
+        </ul>
+      </li>
+    </ol>
     <form method="POST" action="{{ url_for('get_monthly_playlist') }}" class="mt-5">
         <div class="row g-3 align-items-center">
             <div class="col-auto">

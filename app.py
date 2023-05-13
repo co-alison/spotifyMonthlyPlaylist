@@ -4,6 +4,9 @@ import time
 import random
 import datetime
 import os
+from werkzeug.utils import secure_filename
+from PIL import Image
+import base64
 from config import CLIENT_ID, CLIENT_SECRET, SECRET_KEY
 
 from flask import Flask, request, url_for, session, redirect, flash, render_template
@@ -14,8 +17,14 @@ logging.basicConfig(filename='myapp.log', level=logging.ERROR, format='%(asctime
 app = Flask(__name__)
 
 app.config['SESSION_COOKIE_NAME'] = 'Spotify Cookie'
+app.config['UPLOAD_FOLDER'] = 'uploads'
 app.secret_key = SECRET_KEY
 TOKEN_INFO = 'token_info'
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+MAX_IMAGE_SIZE = 256000
 
 # home page
 @app.route('/')
@@ -244,16 +253,27 @@ def create():
         return 'An error has occurred. Please try again later.'
     
     # upload cover image
-    cover_image.save('cover_image.jpg')
+    if cover_image:
+        filename = secure_filename(cover_image.filename)
+        cover_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        cover_image.save(cover_image_path)
 
-    with open('cover_image.jpg', 'rb') as f:
-        try:
-            image_data = f.read()
-            sp.playlist_upload_cover_image(monthly_playlist['id'], image_data)
-        except spotipy.SpotifyException as e:
-            logging.error(f"An error occurred while uploading cover image: {e}")
-    
-    os.remove('cover_image.jpg')
+        # check image size and compress if necessary
+        if os.path.getsize(cover_image_path) > MAX_IMAGE_SIZE:
+            with Image.open(cover_image_path) as img:
+                img.save(cover_image_path, optimize=True, quality=95)
+
+        with open(cover_image_path, 'rb') as f:
+            try:
+                image_data = f.read()
+
+                # encode image data as base64 encoded JPEG image string
+                image_data_base64 = base64.b64encode(image_data).decode('utf-8')
+                sp.playlist_upload_cover_image(monthly_playlist['id'], image_data_base64)
+            except spotipy.SpotifyException as e:
+                logging.error(f"An error occurred while uploading cover image: {e}")
+
+        os.remove(cover_image_path)
 
     # add tracks to new playlist
     try:
@@ -284,7 +304,7 @@ def get_token():
     token_info = session.get(TOKEN_INFO, None)
     if not token_info:
         logging.warning('TOKEN_INFO key is not found in session')
-        redirect(url_for('login', _external = False))
+        return None
 
     now = int(time.time())
 
@@ -300,7 +320,8 @@ def create_spotify_oauth():
         client_id= CLIENT_ID,
         client_secret= CLIENT_SECRET,
         redirect_uri = url_for('redirect_page', _external = True),
-        scope= 'user-library-read user-top-read user-follow-read playlist-modify-public playlist-modify-private user-read-private user-read-email'
+        scope= 'user-library-read user-top-read user-follow-read playlist-modify-public playlist-modify-private user-read-private user-read-email ugc-image-upload'
         )
 
-app.run(host="localhost", port=3000, debug=True)
+if __name__ == '__main__':
+    app.run(host="localhost", port=3000, debug=True)

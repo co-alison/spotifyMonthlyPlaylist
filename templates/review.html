@@ -19,7 +19,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="cover-image" class="form-label">Cover image:</label>
-                    <input class="form-control" type="file" id="cover-image" name="cover-image">
+                    <input class="form-control" type="file" id="cover-image" name="cover-image" accept=".jpeg">
                 </div>
                 <button type="submit" class="btn btn-primary mb-5 mt-5">CREATE</button>
             </form>
@@ -57,12 +57,12 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+<div class="modal fade mt-5" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="warningModalLabel">Warning!</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           Are you sure you want to create the playlist? Selected songs will be removed from the playlist.
@@ -100,7 +100,7 @@
         userTitle.value = userTitle.value ? userTitle.value : userTitle.getAttribute("placeholder");
 
         var userDescription = document.querySelector('textarea[name="description"]');
-        userDescription.value = userDescription.value ? userDescription.title : userDescription.getAttribute("placeholder");
+        userDescription.value = userDescription.value ? userDescription.value : userDescription.getAttribute("placeholder");
 
         
         document.querySelector("form").submit();
