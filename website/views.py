@@ -7,7 +7,7 @@ import os
 from werkzeug.utils import secure_filename
 from PIL import Image
 import base64
-from config import CLIENT_ID, CLIENT_SECRET
+from config import CLIENT_ID, CLIENT_SECRET, UPLOAD_FOLDER
 import logging
 from flask import Blueprint, request, url_for, session, redirect, flash, render_template
 
@@ -179,7 +179,7 @@ def get_monthly_playlist():
     if len(all_month_tracks) < 10:
         return 'There is not enough data for the selected month/year combination. Please select a different one.'
     
-    unique_track_ids = set(track['id'] for track in all_month_tracks)
+    unique_tracks = set(all_month_tracks)
 
     # get unique playlist name (in case of duplicate)
     playlist_name = selected_date.strftime('%B %Y')
@@ -198,7 +198,7 @@ def get_monthly_playlist():
 
     description = "Replay the month with a curated selection of your favourite songs, recent discoveries, plus new releases and recommended tracks based on your listening habits."
 
-    return render_template('review.html', playlist_name=playlist_name_unique, description=description, tracks=all_month_tracks)
+    return render_template('review.html', playlist_name=playlist_name_unique, description=description, tracks=unique_tracks)
 
 @views.route('/monthlyPlaylist/create', methods=['POST'])
 def create():
@@ -244,7 +244,7 @@ def create():
     # upload cover image
     if cover_image:
         filename = secure_filename(cover_image.filename)
-        cover_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        cover_image_path = os.path.join(UPLOAD_FOLDER, filename)
         cover_image.save(cover_image_path)
 
         # check image size and compress if necessary
