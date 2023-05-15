@@ -13,4 +13,4 @@ requests==2.30.0
 six==1.16.0
 spotipy==2.23.0
 urllib3==2.0.2
-Werkzeug==2.3.3
+Werkzeug==2.2.3
