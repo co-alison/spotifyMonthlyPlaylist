@@ -1,8 +1,11 @@
 import os
-from config import SECRET_KEY
 from flask import Flask
-
 import logging
+
+from dotenv import dotenv_values
+env_values = dotenv_values('.env')
+
+SECRET_KEY = env_values['SECRET_KEY']
 
 def create_app():
     logging.basicConfig(filename='myapp.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')

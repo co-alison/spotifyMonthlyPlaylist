@@ -7,10 +7,15 @@ import os
 from werkzeug.utils import secure_filename
 from PIL import Image
 import base64
-from config import CLIENT_ID, CLIENT_SECRET, UPLOAD_FOLDER
 import logging
 from flask import Blueprint, request, url_for, session, redirect, flash, render_template
 
+from dotenv import dotenv_values
+env_values = dotenv_values('.env')
+
+CLIENT_ID = env_values['CLIENT_ID']
+CLIENT_SECRET = env_values['CLIENT_SECRET']
+UPLOAD_FOLDER = env_values['UPLOAD_FOLDER']
 TOKEN_INFO = 'token_info'
 MAX_IMAGE_SIZE = 256000
 views = Blueprint('views', __name__)

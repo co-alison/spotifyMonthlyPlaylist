@@ -3,3 +3,4 @@ config.py
 myapp.log
 /env
 /__pycache__
+.env
