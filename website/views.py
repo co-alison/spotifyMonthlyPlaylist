@@ -98,6 +98,7 @@ def get_monthly_playlist():
         user = sp.current_user()
     except spotipy.SpotifyException as e:
         logging.error(f"An error occurred while retrieving user information: {e}")
+        print(e)
         return 'An error occurred while retrieving your user information. Please try again later.'
 
     # get datetime object for the start of the year and month specified by the user
