@@ -184,7 +184,7 @@ def get_monthly_playlist():
     if len(all_month_tracks) < 10:
         return 'There is not enough data for the selected month/year combination. Please select a different one.'
     
-    unique_tracks = set(all_month_tracks)
+    unique_tracks = {track['id']: track for track in all_month_tracks}.values()
 
     # get unique playlist name (in case of duplicate)
     playlist_name = selected_date.strftime('%B %Y')
