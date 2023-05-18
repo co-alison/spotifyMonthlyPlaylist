@@ -48,3 +48,18 @@ a {
     height: 400px;
     overflow-y: scroll;
 }
+
+.landing-image {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .landing-image {
+        display: none;
+    }
+}
+
+.pl {
+    padding-left: calc(var(--bs-gutter-x) * .5);
+}
